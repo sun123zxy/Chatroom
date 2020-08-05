@@ -1,0 +1,13 @@
+﻿<Window x:Class="Chatroom.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Chatroom"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="480" Width="640">
+    <Grid>
+        <Button x:Name="btnClient" Content="Client" Margin="45,178,345,0" Height="128" VerticalAlignment="Top" Click="btnClient_Click"/>
+        <Button x:Name="BtnServer" Content="Server" Margin="0,178,45,0" HorizontalAlignment="Right" Width="251" Height="128" VerticalAlignment="Top" Click="BtnServer_Click"/>
+    </Grid>
+</Window>
