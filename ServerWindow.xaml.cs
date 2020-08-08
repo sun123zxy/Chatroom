@@ -90,36 +90,38 @@ namespace Chatroom {
             ShowMsg("Listening for client connection at port " + port + " ...");
             EnableInput();
 
-            Thread listen = new Thread(delegate () {
+            Thread tListening = new Thread(delegate () { Listening(); });
+            tListening.IsBackground = true;
+            tListening.Start();
+        }
+        void Listening() {
+            while (true) {
+                Socket client = server.Accept();
+                string nickname = MyNetwork.Read(client); // Get user's nickname
+
+                User user = new User(client, nickname);
+                users.Add(user);
+                ShowMsg("New connection recieved from " + user.nickname + " (" + user.socket.RemoteEndPoint.ToString() + ")");
+
+                MyNetwork.Write(user.socket, "Server: Connection confirmed.");
+                Broadcast(user.nickname + " entered the chatroom.");
+
+                Thread read = new Thread(delegate () { ReadAndBroadCast(user); });
+                read.IsBackground = true;
+                read.Start();
+            }
+        }
+        void ReadAndBroadCast(User user) {
+            try {
                 while (true) {
-                    Socket client = server.Accept();
-                    string nickname = MyNetwork.Read(client); // Get user's nickname
-
-                    User user = new User(client, nickname);
-                    users.Add(user);
-                    ShowMsg("New connection recieved from " + user.nickname + " (" + user.socket.RemoteEndPoint.ToString() + ")");
-                    
-                    MyNetwork.Write(user.socket, "Server: Connection confirmed.");
-                    Broadcast(user.nickname + " entered the chatroom.");
-
-                    Thread read = new Thread(delegate () {
-                        try {
-                            while (true) {
-                                string text = MyNetwork.Read(user.socket);
-                                Broadcast(user.nickname + ": " + text);
-                            }
-                        } catch {
-                            client.Close();
-                            users.Remove(user);
-                            Broadcast(user.nickname + " was no longer in the chatroom.");
-                        }
-                    });
-                    read.IsBackground = true;
-                    read.Start();
+                    string text = MyNetwork.Read(user.socket);
+                    Broadcast(user.nickname + ": " + text);
                 }
-            });
-            listen.IsBackground = true;
-            listen.Start();
+            } catch {
+                user.socket.Close();
+                users.Remove(user);
+                Broadcast(user.nickname + " was no longer in the chatroom.");
+            }
         }
         private void ServerWindow_Unloaded(object sender, RoutedEventArgs e) {
             if(server != null) server.Close();

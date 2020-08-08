@@ -13,6 +13,7 @@ using System.Windows.Shapes;
 
 using System.Net.Sockets;
 using System.Net;
+using System.Data;
 
 namespace Chatroom {
     /// <summary>
@@ -79,32 +80,35 @@ namespace Chatroom {
 
             ShowMsg("Connecting " + ip + ":" + port + " ...");
 
-            Thread connect = new Thread(delegate () {
+            Thread tConnect = new Thread(delegate() { Connect(ip, port); });
+            tConnect.IsBackground = true; // For stopping running threads when the window closed.
+            tConnect.Start();
+        }
 
-                try {
-                    client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    client.Connect(ip, port);
-                    MyNetwork.Write(client, nickName); //Send nickname
-                } catch {
-                    ConnectionLost();
+        void Connect(string ip, int port) {
+            try {
+                client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                client.Connect(ip, port);
+                MyNetwork.Write(client, nickName); //Send nickname
+            } catch {
+                ConnectionLost();
+            }
+            EnableInput();
+
+            Thread tRAS = new Thread(delegate () { ReadAndShow(); });
+            tRAS.IsBackground = true;
+            tRAS.Start();
+        }
+
+        void ReadAndShow() {
+            try {
+                while (true) {
+                    string text = MyNetwork.Read(client);
+                    ShowMsg(text);
                 }
-                EnableInput();
-
-                Thread listenAndAct = new Thread(delegate () {
-                    try {
-                        while (true) {
-                            string text = MyNetwork.Read(client);
-                            ShowMsg(text);
-                        }
-                    } catch {
-                        ConnectionLost();
-                    }
-                });
-                listenAndAct.IsBackground = true;// For stopping running threads when the window closed.
-                listenAndAct.Start();
-            });
-            connect.IsBackground = true;
-            connect.Start();
+            } catch {
+                ConnectionLost();
+            }
         }
         
         private void BtnSend_Click(object sender, RoutedEventArgs e) {
