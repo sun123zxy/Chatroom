@@ -49,14 +49,19 @@ namespace Chatroom {
 
         Socket client;
 
+        bool isConnectionLost;
         void ConnectionLost() {
-            ShowMsg("Connection lost.");
-            if(client != null) client.Close();
-            DisableInput("Disconnected.");
+            if (!isConnectionLost) {
+                isConnectionLost = true;
+                ShowMsg("Connection lost.");
+                if (client != null) client.Close();
+                DisableInput("Disconnected.");
+            }
         }
         private void ClientWindow_Loaded(object sender, RoutedEventArgs e) {
 
             DisableInput("Connecting...");
+            isConnectionLost = false;
 
             ClientConfigWindow ccw = new ClientConfigWindow();
             bool ret = (bool)ccw.ShowDialog();
@@ -77,6 +82,11 @@ namespace Chatroom {
                 return;
             }
             nickName = ccw.txbNickname.Text;
+            if(nickName.Contains(' ')) {
+                MessageBox.Show("Nickname mustn't contains space");
+                ConnectionLost();
+                return;
+            }
 
             ShowMsg("Connecting " + ip + ":" + port + " ...");
 
@@ -92,36 +102,61 @@ namespace Chatroom {
                 MyNetwork.Write(client, nickName); //Send nickname
             } catch {
                 ConnectionLost();
+                return;
             }
             EnableInput();
 
-            Thread tRAS = new Thread(delegate () { ReadAndShow(); });
-            tRAS.IsBackground = true;
-            tRAS.Start();
+            Thread tRAA = new Thread(delegate () { ReadAndAct(); });
+            tRAA.IsBackground = true;
+            tRAA.Start();
         }
 
-        void ReadAndShow() {
+        void ReadAndAct() {
             try {
                 while (true) {
                     string text = MyNetwork.Read(client);
-                    ShowMsg(text);
+                    if (text[0] == '/') {
+                        OperateCmdFromServer(text);
+                    } else {
+                        ShowMsg(text);
+                    }
                 }
             } catch {
                 ConnectionLost();
             }
         }
-        
+        void OperateCmdFromServer(string cmd) {
+            string[] args = cmd.Split(' ');
+            if(args[0] == "/kick") {
+                ShowMsg("You were kicked out by server admin.");
+                ConnectionLost();
+            }
+        }
+
         private void BtnSend_Click(object sender, RoutedEventArgs e) {
             string text = txbInput.Text;
             if (text == "") return;
-            DisableInput("Sending...");
-            
-            Thread send = new Thread(delegate () {
-                MyNetwork.Write(client, text);
-                EnableInput();
+            txbInput.Text = "";
+
+            if (text[0] == '/') {
+                //OperateCmdFromSelf(text); // TODO
+            } else {
+                Send(text);
+            }
+        }
+        delegate void CallBack();
+        void Send(string text, CallBack callBack = null) {
+            Thread tSendToServer = new Thread(delegate () {
+                try {
+                    MyNetwork.Write(client, text);
+                } catch {
+                    ConnectionLost();
+                }
+                if (callBack != null) callBack();
             });
-            send.IsBackground = true;
-            send.Start();
+            tSendToServer.IsBackground = true;
+            tSendToServer.Start();
+            // Echo text will be sent back by the server
         }
 
         private void ClientWindow_Unloaded(object sender, RoutedEventArgs e) {

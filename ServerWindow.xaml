@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Chatroom"
         mc:Ignorable="d"
-        Title="ServerWindow" Height="480" Width="640" Loaded="ServerWindow_Loaded" Unloaded="ServerWindow_Unloaded">
+        Title="ServerWindow" Height="480" Width="640" Loaded="ServerWindow_Loaded" Unloaded="ServerWindow_Unloaded" KeyDown="ServerWindow_KeyDown">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="160*"/>
@@ -14,7 +14,7 @@
         </Grid.RowDefinitions>
         <TextBox x:Name="txbShow" HorizontalAlignment="Center" TextWrapping="Wrap" VerticalAlignment="Center" Width="620" Height="300" IsEnabled="False"/>
         <TextBox x:Name="txbInput" HorizontalAlignment="Center" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Center" Width="620" Height="82"/>
-        <Button x:Name="btnSend" Content="Send" HorizontalAlignment="Left" Margin="541,0,0,0" Grid.Row="2" VerticalAlignment="Center" Height="26" Width="89"/>
+        <Button x:Name="btnSend" Content="Send" Margin="527,0,0,0" Grid.Row="2" Height="26" VerticalAlignment="Center" HorizontalAlignment="Left" Width="89" Click="BtnSend_Click"/>
 
     </Grid>
 </Window>

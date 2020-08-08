@@ -20,6 +20,7 @@ namespace Chatroom {
     class User {
         public Socket socket;
         public string nickname;
+        public User() { }
         public User(Socket socket, string nickname) {
             this.socket = socket;
             this.nickname = nickname;
@@ -56,16 +57,7 @@ namespace Chatroom {
 
         List<User> users;
         Socket server;
-        void Broadcast(string text) {
-            ShowMsg(text);
-            Thread broadcast = new Thread(delegate () {
-                foreach (User user in users) {
-                    MyNetwork.Write(user.socket, text);
-                }
-            });
-            broadcast.IsBackground = true;
-            broadcast.Start();
-        }
+        
         private void ServerWindow_Loaded(object sender, RoutedEventArgs e) {
 
             DisableInput("Initializing...");
@@ -96,28 +88,56 @@ namespace Chatroom {
         }
         void Listening() {
             while (true) {
-                Socket client = server.Accept();
-                string nickname = MyNetwork.Read(client); // Get user's nickname
-
-                User user = new User(client, nickname);
+                User user = new User();
+                user.socket = server.Accept();
+                try {
+                    user.nickname = MyNetwork.Read(user.socket);
+                } catch {
+                    ShowMsg("A new connection recived from " + user.socket.RemoteEndPoint.ToString() + " lost when sending nickname.");
+                    continue;
+                }
                 users.Add(user);
                 ShowMsg("New connection recieved from " + user.nickname + " (" + user.socket.RemoteEndPoint.ToString() + ")");
 
-                MyNetwork.Write(user.socket, "Server: Connection confirmed.");
                 Broadcast(user.nickname + " entered the chatroom.");
 
-                Thread read = new Thread(delegate () { ReadAndBroadCast(user); });
+                Thread read = new Thread(delegate () { ReadAndBroadcast(user); });
                 read.IsBackground = true;
                 read.Start();
             }
         }
-        void ReadAndBroadCast(User user) {
+        void ReadAndBroadcast(User user) {
             try {
                 while (true) {
                     string text = MyNetwork.Read(user.socket);
                     Broadcast(user.nickname + ": " + text);
                 }
             } catch {
+                Offline(user);
+            }
+        }
+
+        delegate void CallBack();
+        void SendToUser(User user, string text, CallBack callBack = null) {
+            Thread tSendToUser = new Thread(delegate () {
+                try {
+                    MyNetwork.Write(user.socket, text);
+                } catch {
+                    Offline(user);
+                }
+                if (callBack != null) callBack();
+            });
+            tSendToUser.IsBackground = true;
+            tSendToUser.Start();
+        }
+        void Broadcast(string text) {
+            foreach (User user in users) {
+                SendToUser(user, text);
+            }
+            ShowMsg(text);
+        }
+        void Offline(User user) {
+            if (users.Contains(user)) {
                 user.socket.Close();
                 users.Remove(user);
                 Broadcast(user.nickname + " was no longer in the chatroom.");
@@ -127,6 +147,52 @@ namespace Chatroom {
             if(server != null) server.Close();
             foreach (User user in users) {
                 user.socket.Close();
+            }
+        }
+
+        private void BtnSend_Click(object sender, RoutedEventArgs e) {
+            string text = txbInput.Text;
+            if (text == "") return;
+            txbInput.Text = "";
+
+            if(text[0] == '/') {
+                OperateCmdFromSelf(text);
+            } else {
+                Send(text);
+            }
+        }
+        void Send(string text) {
+            Broadcast("Server: " + text);
+        }
+        void OperateCmdFromSelf(string cmd) {
+            ShowMsg(cmd);
+            string[] args = cmd.Split(' ');
+            if (args[0] == "/kick") {
+                if(args.Length == 2) {
+                    bool isKicked = false;
+                    foreach (User user in users) {
+                        if (user.nickname == args[1]) {
+                            SendToUser(user, "/kick");
+                            Offline(user);
+
+                            Broadcast(user.nickname + " was kicked out by server admin.");
+                            isKicked = true; break;
+                        }
+                    }
+                    if (!isKicked) {
+                        ShowMsg("Cannot find a user called " + args[1]);
+                    }
+                } else {
+                    ShowMsg("Wrong usage.");
+                }
+            } else {
+                ShowMsg("Cannot find this command.");
+            }
+        }
+
+        private void ServerWindow_KeyDown(object sender, KeyEventArgs e) {
+            if (e.Key == Key.Enter) {// Hotkey for btnSend
+                btnSend.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, btnSend));
             }
         }
     }
