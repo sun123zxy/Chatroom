@@ -19,10 +19,10 @@
             </Grid.ColumnDefinitions>
             <Label Content="Server IP" HorizontalAlignment="Left" VerticalAlignment="Center" Height="26" Width="69" Margin="10,0,0,0"/>
             <Label Content="Port" HorizontalAlignment="Left" Grid.Row="1" VerticalAlignment="Center" Height="26" Width="69" Margin="10,0,0,0"/>
-            <Label Content="Your Nickname" HorizontalAlignment="Center" Grid.Row="2" VerticalAlignment="Center" Height="26" Width="104"/>
+            <Label Content="Your Username" HorizontalAlignment="Center" Grid.Row="2" VerticalAlignment="Center" Height="26" Width="104"/>
             <TextBox x:Name="txbIP" Grid.Column="1" HorizontalAlignment="Center" TextWrapping="Wrap" VerticalAlignment="Center" Width="140" Height="22" Text="127.0.0.1"/>
             <TextBox x:Name="txbPort" Grid.Column="1" HorizontalAlignment="Center" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Center" Width="140" Height="22" Text="23333"/>
-            <TextBox x:Name="txbNickname" Grid.Column="1" HorizontalAlignment="Center" Grid.Row="2" TextWrapping="Wrap" VerticalAlignment="Center" Width="140" Height="22" Text="anonymous"/>
+            <TextBox x:Name="txbUsername" Grid.Column="1" HorizontalAlignment="Center" Grid.Row="2" TextWrapping="Wrap" VerticalAlignment="Center" Width="140" Height="22" Text="anonymous"/>
         </Grid>
         <Button x:Name="btnConfirm" Content="Confirm" HorizontalAlignment="Left" Height="36" Margin="46,190,0,0" VerticalAlignment="Top" Width="93" Click="btnConfirm_Click"/>
         <Button x:Name="btnCancel" Content="Cancel" HorizontalAlignment="Left" Height="36" Margin="220,190,0,0" VerticalAlignment="Top" Width="100" Click="btnCancel_Click"/>

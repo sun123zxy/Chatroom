@@ -12,21 +12,15 @@
     <Compile Update="ClientConfigWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="ClientWindow.xaml.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Update="ServerConfigWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="ServerWindow.xaml.cs">
+    <Compile Update="UniversalWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
     <Page Update="ClientConfigWindow.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Update="ClientWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="MainWindow.xaml">
@@ -35,7 +29,7 @@
     <Page Update="ServerConfigWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
-    <Page Update="ServerWindow.xaml">
+    <Page Update="UniversalWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
