@@ -17,6 +17,14 @@ using System.Net;
 using System.Collections;
 
 namespace Chatroom {
+    class User {
+        public Socket socket;
+        public string nickname;
+        public User(Socket socket, string nickname) {
+            this.socket = socket;
+            this.nickname = nickname;
+        }
+    }
     /// <summary>
     /// ServerWindow.xaml 的交互逻辑
     /// </summary>
@@ -46,23 +54,17 @@ namespace Chatroom {
             });
         }
 
-        struct ClientInfo {
-            public TcpClient client;
-            public NetworkStream ns;
-            public string nickname;
-            public ClientInfo(TcpClient client, NetworkStream ns, string nickname) {
-                this.client = client;
-                this.ns = ns;
-                this.nickname = nickname;
-            }
-        }
-        List<ClientInfo> clientInfo;
-
+        List<User> users;
+        Socket server;
         void Broadcast(string text) {
             ShowMsg(text);
-            foreach (ClientInfo ci in clientInfo) {
-                MyNetwork.Write(ci.ns, text);
-            }
+            Thread broadcast = new Thread(delegate () {
+                foreach (User user in users) {
+                    MyNetwork.Write(user.socket, text);
+                }
+            });
+            broadcast.IsBackground = true;
+            broadcast.Start();
         }
         private void ServerWindow_Loaded(object sender, RoutedEventArgs e) {
 
@@ -80,34 +82,36 @@ namespace Chatroom {
                 Close(); return;
             }
 
-            clientInfo = new List<ClientInfo>();
+            users = new List<User>();
 
-            TcpListener listener = new TcpListener(IPAddress.Any, port);
-            listener.Start();
+            server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            server.Bind(new IPEndPoint(IPAddress.Any, port));
+            server.Listen(10);
             ShowMsg("Listening for client connection at port " + port + " ...");
             EnableInput();
 
             Thread listen = new Thread(delegate () {
                 while (true) {
-                    TcpClient client = listener.AcceptTcpClient();
-                    NetworkStream ns = client.GetStream();
-                    string nickname = MyNetwork.Read(ns); // Get nickname
-                    ShowMsg("New connection recieved from " + nickname + " (" + client.Client.RemoteEndPoint.ToString() + ")");
-                    clientInfo.Add(new ClientInfo(client, ns, nickname));
-                    MyNetwork.Write(ns, "Server: Connection confirmed.");
-                    Broadcast(nickname + " entered the chatroom.");
+                    Socket client = server.Accept();
+                    string nickname = MyNetwork.Read(client); // Get user's nickname
+
+                    User user = new User(client, nickname);
+                    users.Add(user);
+                    ShowMsg("New connection recieved from " + user.nickname + " (" + user.socket.RemoteEndPoint.ToString() + ")");
+                    
+                    MyNetwork.Write(user.socket, "Server: Connection confirmed.");
+                    Broadcast(user.nickname + " entered the chatroom.");
 
                     Thread read = new Thread(delegate () {
                         try {
                             while (true) {
-                                string text = MyNetwork.Read(ns);
-                                Broadcast(nickname + ": " + text);
+                                string text = MyNetwork.Read(user.socket);
+                                Broadcast(user.nickname + ": " + text);
                             }
                         } catch {
-                            ns.Close();
                             client.Close();
-                            clientInfo.Remove(new ClientInfo(client, ns, nickname));
-                            Broadcast(nickname + " was no longer in the chatroom.");
+                            users.Remove(user);
+                            Broadcast(user.nickname + " was no longer in the chatroom.");
                         }
                     });
                     read.IsBackground = true;
@@ -116,6 +120,12 @@ namespace Chatroom {
             });
             listen.IsBackground = true;
             listen.Start();
+        }
+        private void ServerWindow_Unloaded(object sender, RoutedEventArgs e) {
+            server.Close();
+            foreach (User user in users) {
+                user.socket.Close();
+            }
         }
     }
 }

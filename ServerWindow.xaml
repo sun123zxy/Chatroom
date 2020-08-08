@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Chatroom"
         mc:Ignorable="d"
-        Title="ServerWindow" Height="480" Width="640" Loaded="ServerWindow_Loaded">
+        Title="ServerWindow" Height="480" Width="640" Loaded="ServerWindow_Loaded" Unloaded="ServerWindow_Unloaded">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="160*"/>

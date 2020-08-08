@@ -44,10 +44,15 @@ namespace Chatroom {
             });
         }
 
-        TcpClient client;
-        NetworkStream ns;
         string nickName;
 
+        Socket client;
+
+        void ConnectionLost() {
+            ShowMsg("Connection lost.");
+            client.Close();
+            DisableInput("Disconnected.");
+        }
         private void ClientWindow_Loaded(object sender, RoutedEventArgs e) {
 
             DisableInput("Connecting...");
@@ -73,22 +78,24 @@ namespace Chatroom {
             ShowMsg("Connecting " + ip + ":" + port + " ...");
 
             Thread connect = new Thread(delegate () {
-                client = new TcpClient(ip, port);
-                ns = client.GetStream();
-                MyNetwork.Write(ns, nickName); //Send nickname
+
+                try {
+                    client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    client.Connect(ip, port);
+                    MyNetwork.Write(client, nickName); //Send nickname
+                } catch {
+                    ConnectionLost();
+                }
                 EnableInput();
 
                 Thread listenAndAct = new Thread(delegate () {
                     try {
                         while (true) {
-                            string text = MyNetwork.Read(ns);
+                            string text = MyNetwork.Read(client);
                             ShowMsg(text);
                         }
                     } catch {
-                        ShowMsg("Connection lost.");
-                        ns.Close();
-                        client.Close();
-                        DisableInput("Disconnected.");
+                        ConnectionLost();
                     }
                 });
                 listenAndAct.IsBackground = true;// For stopping running threads when the window closed.
@@ -104,16 +111,14 @@ namespace Chatroom {
             DisableInput("Sending...");
             
             Thread send = new Thread(delegate () {
-                MyNetwork.Write(ns, text);
+                MyNetwork.Write(client, text);
                 EnableInput();
             });
             send.IsBackground = true;
             send.Start();
         }
 
-        private void ClientWindow_Unloaded(object sender, RoutedEventArgs e) {//porblem? TODO
-            //MyNetwork.Write(ns, "\0");
-            ns.Close();
+        private void ClientWindow_Unloaded(object sender, RoutedEventArgs e) {
             client.Close();
         }
 
