@@ -50,7 +50,7 @@ namespace Chatroom {
 
         void ConnectionLost() {
             ShowMsg("Connection lost.");
-            client.Close();
+            if(client != null) client.Close();
             DisableInput("Disconnected.");
         }
         private void ClientWindow_Loaded(object sender, RoutedEventArgs e) {
@@ -67,11 +67,13 @@ namespace Chatroom {
             string ip = ccw.txbIP.Text;
             if (!IPAddress.TryParse(ip, out _)) {
                 MessageBox.Show("IP error");
-                Close();return;
+                ConnectionLost();
+                return;
             }
             if (!int.TryParse(ccw.txbPort.Text, out int port)) {
                 MessageBox.Show("Port error");
-                Close(); return;
+                ConnectionLost();
+                return;
             }
             nickName = ccw.txbNickname.Text;
 
@@ -119,7 +121,7 @@ namespace Chatroom {
         }
 
         private void ClientWindow_Unloaded(object sender, RoutedEventArgs e) {
-            client.Close();
+            if(client != null) client.Close();
         }
 
         private void ClientWindow_KeyDown(object sender, KeyEventArgs e) {

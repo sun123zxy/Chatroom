@@ -122,7 +122,7 @@ namespace Chatroom {
             listen.Start();
         }
         private void ServerWindow_Unloaded(object sender, RoutedEventArgs e) {
-            server.Close();
+            if(server != null) server.Close();
             foreach (User user in users) {
                 user.socket.Close();
             }
