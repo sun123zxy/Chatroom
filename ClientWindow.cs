@@ -86,18 +86,22 @@ namespace Chatroom {
         }
 
         void ReadAndAct() {
-            try {
-                while (true) {
-                    string text = MyNetwork.Read(client);
-                    if (text[0] == '/') {
-                        OptCmdFromServer(text);
-                    } else {
-                        ShowMsg(text);
-                    }
+            
+            while (true) {
+                string text;
+                try {
+                    text = MyNetwork.Read(client);
+                } catch {
+                    ConnectionLost();
+                    return;
                 }
-            } catch {
-                ConnectionLost();
+                if (text[0] == '/') {
+                    OptCmdFromServer(text);
+                } else {
+                    ShowMsg(text);
+                }
             }
+            
         }
         public void OptCmdFromServer(string cmd) {
             string[] args = cmd.Split(' ');
@@ -121,6 +125,7 @@ namespace Chatroom {
             }
         }
         public override void Send(string text) {
+
             Thread tSendToServer = new Thread(delegate () {
                 try {
                     MyNetwork.Write(client, text);

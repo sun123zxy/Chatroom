@@ -32,7 +32,7 @@ namespace Chatroom {
             Close();*/
         }
 
-        private void btnClient_Click(object sender, RoutedEventArgs e) {
+        private void BtnClient_Click(object sender, RoutedEventArgs e) {
             ClientWindow clientWindow = new ClientWindow();
             Close();
             clientWindow.Show();
