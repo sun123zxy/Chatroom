@@ -13,14 +13,21 @@ using System.Windows.Shapes;
 
 using System.Net.Sockets;
 using System.Net;
+using System.Runtime.CompilerServices;
 
 namespace Chatroom {
     /// <summary>
     /// UniversalWindow.xaml 的交互逻辑
     /// </summary>
     public partial class UniversalWindow : Window {
+        public List<string> inputHistory;
+        public int curHistoryId;
+
         public UniversalWindow() {
             InitializeComponent();
+
+            inputHistory = new List<string>();
+            curHistoryId = 0;
         }
 
         public void ShowMsg(string msg) {
@@ -43,13 +50,14 @@ namespace Chatroom {
                 btnSend.IsEnabled = true;
             });
         }
-        public delegate void CallBack();
+        public delegate void CallBack(); 
 
         public void BtnSend_Click(object sender, RoutedEventArgs e) {
             string text = txbInput.Text;
             if (text == "") return;
             txbInput.Text = "";
-
+            inputHistory.Add(text);
+            curHistoryId = inputHistory.Count;
             if (text[0] == '/') {
                 OptCmdFromSelf(text);
             } else {
@@ -68,9 +76,29 @@ namespace Chatroom {
         public virtual void UniversalWindow_Unloaded(object sender, RoutedEventArgs e) {
 
         }
-        public void UniversalWindow_KeyDown(object sender, KeyEventArgs e) {
-            if (e.Key == Key.Enter) {// Hotkey for btnSend
-                btnSend.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, btnSend));
+        public void TxbInput_PreviewKeyDown(object sender, KeyEventArgs e) {
+            switch (e.Key) {
+                case Key.Enter: // Hotkey for btnSend
+                    btnSend.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, btnSend));
+                    break;
+                case Key.Up:
+                    if (inputHistory.Count != 0) {
+                        if (curHistoryId > 0) curHistoryId--;
+                        if (curHistoryId < inputHistory.Count) {
+                            txbInput.Text = inputHistory[curHistoryId];
+                            txbInput.SelectionStart = txbInput.Text.Length; //Cursur to the end
+                        }
+                    }
+                    break;
+                case Key.Down:
+                    if (inputHistory.Count != 0) {
+                        if (curHistoryId < inputHistory.Count - 1) curHistoryId++;
+                        if (curHistoryId < inputHistory.Count) {
+                            txbInput.Text = inputHistory[curHistoryId];
+                            txbInput.SelectionStart = txbInput.Text.Length;
+                        }
+                    }
+                    break;
             }
         }
     }
