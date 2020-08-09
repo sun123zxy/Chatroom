@@ -65,13 +65,13 @@ namespace Chatroom {
         public virtual void UniversalWindow_Loaded(object sender, RoutedEventArgs e) {
 
         }
+        public virtual void UniversalWindow_Unloaded(object sender, RoutedEventArgs e) {
+
+        }
         public void UniversalWindow_KeyDown(object sender, KeyEventArgs e) {
             if (e.Key == Key.Enter) {// Hotkey for btnSend
                 btnSend.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, btnSend));
             }
-        }
-        public virtual void UniversalWindow_Unloaded(object sender, RoutedEventArgs e) {
-
         }
     }
 }

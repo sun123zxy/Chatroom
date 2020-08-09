@@ -26,8 +26,8 @@ namespace Chatroom {
         }
     }
     public class ServerWindow : UniversalWindow {
-        List<User> users;
-        Socket server;
+        public List<User> users;
+        public Socket server;
 
         public override void UniversalWindow_Loaded(object sender, RoutedEventArgs e) {
 
@@ -89,7 +89,7 @@ namespace Chatroom {
                 Offline(user);
             }
         }
-        void SendToUser(User user, string text, CallBack callBack = null) {
+        public void SendToUser(User user, string text, CallBack callBack = null) {
             Thread tSendToUser = new Thread(delegate () {
                 try {
                     MyNetwork.Write(user.socket, text);
@@ -101,13 +101,13 @@ namespace Chatroom {
             tSendToUser.IsBackground = true;
             tSendToUser.Start();
         }
-        void Broadcast(string text) {
+        public void Broadcast(string text) {
             foreach (User user in users) {
                 SendToUser(user, text);
             }
             ShowMsg(text);
         }
-        void Offline(User user) {
+        public void Offline(User user) {
             if (users.Contains(user)) {
                 user.socket.Close();
                 users.Remove(user);

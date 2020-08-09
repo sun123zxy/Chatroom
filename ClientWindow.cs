@@ -22,7 +22,7 @@ namespace Chatroom {
         Socket client;
 
         bool isConnectionLost;
-        void ConnectionLost() {
+        public void ConnectionLost() {
             if (!isConnectionLost) {
                 isConnectionLost = true;
                 ShowMsg("Connection lost.");
@@ -97,7 +97,7 @@ namespace Chatroom {
                 ConnectionLost();
             }
         }
-        void OptCmdFromServer(string cmd) {
+        public void OptCmdFromServer(string cmd) {
             string[] args = cmd.Split(' ');
             if (args[0] == "/kick") {
                 ShowMsg("You were kicked out by server admin.");
@@ -117,7 +117,7 @@ namespace Chatroom {
             // Echo text will be sent back by the server
         }
 
-        private void ClientWindow_Unloaded(object sender, RoutedEventArgs e) {
+        public override void UniversalWindow_Unloaded(object sender, RoutedEventArgs e) {
             if (client != null) client.Close();
         }
     }
