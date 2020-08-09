@@ -14,6 +14,7 @@ using System.Windows.Shapes;
 using System.Net.Sockets;
 using System.Net;
 using System.Threading;
+using Microsoft.VisualBasic;
 
 namespace Chatroom {
     public class User {
@@ -24,11 +25,18 @@ namespace Chatroom {
             this.socket = socket;
             this.username = username;
         }
+        public IPAddress IP {
+            get {
+                return ((IPEndPoint)socket.RemoteEndPoint).Address;
+            }
+        }
     }
     public class ServerWindow : UniversalWindow {
 
         public Dictionary<string, User> users;
         public Socket server;
+
+        public HashSet<IPAddress> bannedIp;
 
         public override void UniversalWindow_Loaded(object sender, RoutedEventArgs e) {
 
@@ -49,6 +57,7 @@ namespace Chatroom {
             Title += " - Server";
 
             users = new Dictionary<string, User>();
+            bannedIp = new HashSet<IPAddress>();
 
             server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             server.Bind(new IPEndPoint(IPAddress.Any, port));
@@ -70,13 +79,18 @@ namespace Chatroom {
                     ShowMsg("A new connection lost when sending username. " + "(" + user.socket.RemoteEndPoint.ToString() + ")");
                     continue;
                 }
+                if (bannedIp.Contains(user.IP)) { //Banned IP
+                    SendToUser(user, "/refuse_banned");
+                    ShowMsg("A new connection was refused because its IP has been banned. " + "(" + user.username + ", " + user.socket.RemoteEndPoint.ToString() + ")");
+                    continue;
+                }
                 if (users.ContainsKey(user.username)) { //Duplicate Name
-                    SendToUser(user, "/duplicate");
-                    ShowMsg("A new connection lost because of a duplicated username. " + "(" + user.username + ", " + user.socket.RemoteEndPoint.ToString() + ")");
+                    SendToUser(user, "/refuse_duplicate");
+                    ShowMsg("A new connection was refused because of its duplicated username. " + "(" + user.username + ", " + user.socket.RemoteEndPoint.ToString() + ")");
                     continue;
                 }
                 users.Add(user.username ,user);
-                ShowMsg("A new connection builded." + "(" + user.username + ", " + user.socket.RemoteEndPoint.ToString() + ")");
+                ShowMsg("A new connection builded. " + "(" + user.username + ", " + user.socket.RemoteEndPoint.ToString() + ")");
 
                 Broadcast(user.username + " entered the chatroom.");
 
@@ -114,10 +128,12 @@ namespace Chatroom {
             ShowMsg(text);
         }
         public void Offline(User user) {
-            if (users.ContainsKey(user.username)) {
-                user.socket.Close();
-                users.Remove(user.username);
-                Broadcast(user.username + " was no longer in the chatroom.");
+            lock (users) {
+                if (users.ContainsKey(user.username)) {
+                    users.Remove(user.username);
+                    user.socket.Close();
+                    Broadcast(user.username + " was no longer in the chatroom.");
+                }
             }
         }
         public override void UniversalWindow_Unloaded(object sender, RoutedEventArgs e) {
@@ -137,12 +153,58 @@ namespace Chatroom {
                     if(args.Length == 2) {
                         if (users.ContainsKey(args[1])) {
                             User user = users[args[1]];
-                            SendToUser(user, "/kick");
-                            Offline(user);
-
-                            Broadcast(user.username + " was kicked out by server admin.");
+                            SendToUser(user, "/kick", delegate() {
+                                Offline(user);
+                                Broadcast(user.username + " was kicked out by server admin.");
+                            });
                         } else {
                             ShowMsg("Cannot find a user called " + args[1]);
+                        }
+                    } else {
+                        ShowMsg("Wrong usage.");
+                    }
+                    break;
+                case "/ban":
+                    if(args.Length == 1) {
+                        ShowMsg("Banned IPs:");
+                        foreach(IPAddress ip in bannedIp) {
+                            ShowMsg("    " + ip.ToString());
+                        }
+                    }else if(args.Length == 2) {
+                        if (IPAddress.TryParse(args[1], out IPAddress ip)) {
+
+                        } else if (users.ContainsKey(args[1])) {
+                            User user = users[args[1]];
+                            ip = user.IP;
+                        } else {
+                            ShowMsg(args[1] + " is not a IP Address or a username");
+                            break;
+                        }
+                        bannedIp.Add(ip);
+                        Broadcast(ip.ToString() + " has been banned by server admin.");
+                        foreach (KeyValuePair<string, User> kvp in users) { User user = kvp.Value;
+                            if(Equals(user.IP, ip)) {
+                                SendToUser(user, "/ban", delegate() {
+                                    Offline(user);
+                                    Broadcast(user.username + " has been banned according to the new IP ban list.");
+                                });
+                            }
+                        }
+                    } else {
+                        ShowMsg("Wrong usage.");
+                    }
+                    break;
+                case "/unban":
+                    if (args.Length == 2) {
+                        if (!IPAddress.TryParse(args[1], out IPAddress ip)) {
+                            ShowMsg(args[1] + " is not an IP address");
+                            break;
+                        }
+                        if (bannedIp.Contains(ip)) {
+                            bannedIp.Remove(ip);
+                            Broadcast(ip.ToString() + " is no longer in the ban list.");
+                        } else {
+                            ShowMsg(ip.ToString() + " is not in the ban list.");
                         }
                     } else {
                         ShowMsg("Wrong usage.");

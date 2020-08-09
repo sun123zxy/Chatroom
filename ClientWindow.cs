@@ -23,11 +23,13 @@ namespace Chatroom {
 
         bool isConnectionLost;
         public void ConnectionLost() {
-            if (!isConnectionLost) {
-                isConnectionLost = true;
-                ShowMsg("Connection lost.");
-                if (client != null) client.Close();
-                DisableInput("Disconnected.");
+            lock ((object)isConnectionLost) {
+                if (!isConnectionLost) {
+                    isConnectionLost = true;
+                    ShowMsg("Connection lost.");
+                    if (client != null) client.Close();
+                    DisableInput("Disconnected.");
+                }
             }
         }
         public override void UniversalWindow_Loaded(object sender, RoutedEventArgs e) {
@@ -55,7 +57,7 @@ namespace Chatroom {
             }
             username = ccw.txbUsername.Text;
             if (username.Contains(' ')) {
-                MessageBox.Show("username mustn't contains space");
+                MessageBox.Show("Username mustn't contains space");
                 ConnectionLost();
                 return;
             }
@@ -104,8 +106,16 @@ namespace Chatroom {
                     ShowMsg("You were kicked out by server admin.");
                     ConnectionLost();
                     break;
-                case "/duplicate":
+                case "/ban":
+                    ShowMsg("Your IP has been banned by server admin.");
+                    ConnectionLost();
+                    break;
+                case "/refuse_duplicate":
                     ShowMsg("Cannot join the server because your username is already in use. Change your username and retry.");
+                    ConnectionLost();
+                    break;
+                case "/refuse_banned":
+                    ShowMsg("Cannot join the server because your IP has been banned by server admin.");
                     ConnectionLost();
                     break;
             }
