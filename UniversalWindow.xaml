@@ -12,7 +12,7 @@
             <RowDefinition Height="55*"/>
             <RowDefinition Height="22*"/>
         </Grid.RowDefinitions>
-        <TextBox x:Name="txbShow" HorizontalAlignment="Center" Height="290" TextWrapping="Wrap" VerticalAlignment="Center" Width="620" IsEnabled="False"/>
+        <TextBox x:Name="txbShow" HorizontalAlignment="Center" Height="290" TextWrapping="Wrap" VerticalAlignment="Center" Width="620" IsReadOnly="True"/>
         <TextBox x:Name="txbInput" HorizontalAlignment="Center" Grid.Row="1" TextWrapping="Wrap" VerticalAlignment="Center" Width="620" Height="90"/>
         <Button x:Name="btnSend" Content="Send" HorizontalAlignment="Left" Height="24" Margin="530,0,0,0" Grid.Row="2" VerticalAlignment="Center" Width="88" Click="BtnSend_Click"/>
 
