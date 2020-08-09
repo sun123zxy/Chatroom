@@ -99,9 +99,11 @@ namespace Chatroom {
         }
         public void OptCmdFromServer(string cmd) {
             string[] args = cmd.Split(' ');
-            if (args[0] == "/kick") {
-                ShowMsg("You were kicked out by server admin.");
-                ConnectionLost();
+            switch (args[0]) {
+                case "/kick":
+                    ShowMsg("You were kicked out by server admin.");
+                    ConnectionLost();
+                    break;
             }
         }
         public override void Send(string text) {

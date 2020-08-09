@@ -26,6 +26,7 @@ namespace Chatroom {
         }
     }
     public class ServerWindow : UniversalWindow {
+
         public List<User> users;
         public Socket server;
 
@@ -126,26 +127,29 @@ namespace Chatroom {
         public override void OptCmdFromSelf(string cmd) {
             ShowMsg(cmd);
             string[] args = cmd.Split(' ');
-            if (args[0] == "/kick") {
-                if (args.Length == 2) {
-                    bool isKicked = false;
-                    foreach (User user in users) {
-                        if (user.nickname == args[1]) {
-                            SendToUser(user, "/kick");
-                            Offline(user);
+            switch (args[0]) {
+                case "/kick":
+                    if(args.Length == 2) {
+                        bool isKicked = false;
+                        foreach (User user in users) {
+                            if (user.nickname == args[1]) {
+                                SendToUser(user, "/kick");
+                                Offline(user);
 
-                            Broadcast(user.nickname + " was kicked out by server admin.");
-                            isKicked = true; break;
+                                Broadcast(user.nickname + " was kicked out by server admin.");
+                                isKicked = true; break;
+                            }
                         }
+                        if (!isKicked) {
+                            ShowMsg("Cannot find a user called " + args[1]);
+                        }
+                    } else {
+                        ShowMsg("Wrong usage.");
                     }
-                    if (!isKicked) {
-                        ShowMsg("Cannot find a user called " + args[1]);
-                    }
-                } else {
-                    ShowMsg("Wrong usage.");
-                }
-            } else {
-                ShowMsg("Cannot find this command.");
+                    break;
+                default:
+                    ShowMsg("Cannot find this command.");
+                    break;
             }
         }
     }
