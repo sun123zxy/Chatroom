@@ -45,6 +45,8 @@ namespace Chatroom {
                 Close(); return;
             }
 
+            Title += " - Server";
+
             users = new List<User>();
 
             server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);

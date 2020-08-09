@@ -60,8 +60,9 @@ namespace Chatroom {
                 return;
             }
 
-            ShowMsg("Connecting " + ip + ":" + port + " ...");
+            Title += " - Client - " + nickName;
 
+            ShowMsg("Connecting " + ip + ":" + port + " ...");
             Thread tConnect = new Thread(delegate () { Connect(ip, port); });
             tConnect.IsBackground = true; // For stopping running threads when the window closed.
             tConnect.Start();
