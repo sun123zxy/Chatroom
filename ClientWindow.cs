@@ -16,35 +16,7 @@ using System.Net;
 using System.Data;
 
 namespace Chatroom {
-    /// <summary>
-    /// ClientWindow.xaml 的交互逻辑
-    /// </summary>
-    public partial class ClientWindow : Window {
-
-        public ClientWindow() {
-            InitializeComponent();
-        }
-        void ShowMsg(string msg) {
-            this.Dispatcher.Invoke(delegate () { //MultiThread need this
-                txbShow.Text += msg + "\n";
-                txbShow.ScrollToEnd();
-            });
-        }
-        void DisableInput(string text = "") {
-            this.Dispatcher.Invoke(delegate () {
-                txbInput.IsEnabled = false;
-                txbInput.Text = text;
-                btnSend.IsEnabled = false;
-            });
-        }
-        void EnableInput(string text = "") {
-            this.Dispatcher.Invoke(delegate () {
-                txbInput.IsEnabled = true;
-                txbInput.Text = text;
-                btnSend.IsEnabled = true;
-            });
-        }
-
+    class ClientWindow : UniversalWindow {
         string nickName;
 
         Socket client;
@@ -58,7 +30,7 @@ namespace Chatroom {
                 DisableInput("Disconnected.");
             }
         }
-        private void ClientWindow_Loaded(object sender, RoutedEventArgs e) {
+        public override void UniversalWindow_Loaded(object sender, RoutedEventArgs e) {
 
             DisableInput("Connecting...");
             isConnectionLost = false;
@@ -82,7 +54,7 @@ namespace Chatroom {
                 return;
             }
             nickName = ccw.txbNickname.Text;
-            if(nickName.Contains(' ')) {
+            if (nickName.Contains(' ')) {
                 MessageBox.Show("Nickname mustn't contains space");
                 ConnectionLost();
                 return;
@@ -90,11 +62,10 @@ namespace Chatroom {
 
             ShowMsg("Connecting " + ip + ":" + port + " ...");
 
-            Thread tConnect = new Thread(delegate() { Connect(ip, port); });
+            Thread tConnect = new Thread(delegate () { Connect(ip, port); });
             tConnect.IsBackground = true; // For stopping running threads when the window closed.
             tConnect.Start();
         }
-
         void Connect(string ip, int port) {
             try {
                 client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -116,7 +87,7 @@ namespace Chatroom {
                 while (true) {
                     string text = MyNetwork.Read(client);
                     if (text[0] == '/') {
-                        OperateCmdFromServer(text);
+                        OptCmdFromServer(text);
                     } else {
                         ShowMsg(text);
                     }
@@ -125,34 +96,20 @@ namespace Chatroom {
                 ConnectionLost();
             }
         }
-        void OperateCmdFromServer(string cmd) {
+        void OptCmdFromServer(string cmd) {
             string[] args = cmd.Split(' ');
-            if(args[0] == "/kick") {
+            if (args[0] == "/kick") {
                 ShowMsg("You were kicked out by server admin.");
                 ConnectionLost();
             }
         }
-
-        private void BtnSend_Click(object sender, RoutedEventArgs e) {
-            string text = txbInput.Text;
-            if (text == "") return;
-            txbInput.Text = "";
-
-            if (text[0] == '/') {
-                //OperateCmdFromSelf(text); // TODO
-            } else {
-                Send(text);
-            }
-        }
-        delegate void CallBack();
-        void Send(string text, CallBack callBack = null) {
+        public override void Send(string text) {
             Thread tSendToServer = new Thread(delegate () {
                 try {
                     MyNetwork.Write(client, text);
                 } catch {
                     ConnectionLost();
                 }
-                if (callBack != null) callBack();
             });
             tSendToServer.IsBackground = true;
             tSendToServer.Start();
@@ -160,13 +117,7 @@ namespace Chatroom {
         }
 
         private void ClientWindow_Unloaded(object sender, RoutedEventArgs e) {
-            if(client != null) client.Close();
-        }
-
-        private void ClientWindow_KeyDown(object sender, KeyEventArgs e) {
-            if (e.Key == Key.Enter) {// Hotkey for btnSend
-                btnSend.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, btnSend));
-            }
+            if (client != null) client.Close();
         }
     }
 }
