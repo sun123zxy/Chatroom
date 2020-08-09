@@ -31,20 +31,20 @@ namespace Chatroom {
         }
 
         public void ShowMsg(string msg) {
-            this.Dispatcher.Invoke(delegate () { //MultiThread need this
+            this.Dispatcher.BeginInvoke((Action)delegate () { //MultiThread need this
                 txbShow.Text += msg + "\n";
                 txbShow.ScrollToEnd();
             });
         }
         public void DisableInput(string text = "") {
-            this.Dispatcher.Invoke(delegate () {
+            this.Dispatcher.BeginInvoke((Action)delegate () {
                 txbInput.IsEnabled = false;
                 txbInput.Text = text;
                 btnSend.IsEnabled = false;
             });
         }
         public void EnableInput(string text = "") {
-            this.Dispatcher.Invoke(delegate () {
+            this.Dispatcher.BeginInvoke((Action)delegate () {
                 txbInput.IsEnabled = true;
                 txbInput.Text = text;
                 btnSend.IsEnabled = true;

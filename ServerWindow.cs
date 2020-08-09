@@ -39,7 +39,6 @@ namespace Chatroom {
         public HashSet<IPAddress> bannedIp;
 
         public override void UniversalWindow_Loaded(object sender, RoutedEventArgs e) {
-
             DisableInput("Initializing...");
 
             ServerConfigWindow scw = new ServerConfigWindow();
@@ -150,7 +149,7 @@ namespace Chatroom {
             string[] args = cmd.Split(' ');
             switch (args[0]) {
                 case "/kick":
-                    if(args.Length == 2) {
+                    if (args.Length == 2) {
                         if (users.ContainsKey(args[1])) {
                             User user = users[args[1]];
                             SendToUser(user, "/kick", delegate() {
@@ -170,14 +169,14 @@ namespace Chatroom {
                         foreach(IPAddress ip in bannedIp) {
                             ShowMsg("    " + ip.ToString());
                         }
-                    }else if(args.Length == 2) {
+                    } else if (args.Length == 2) {
                         if (IPAddress.TryParse(args[1], out IPAddress ip)) {
 
                         } else if (users.ContainsKey(args[1])) {
                             User user = users[args[1]];
                             ip = user.IP;
                         } else {
-                            ShowMsg(args[1] + " is not a IP Address or a username");
+                            ShowMsg(args[1] + " is not a IP Address or a username.");
                             break;
                         }
                         bannedIp.Add(ip);
@@ -185,8 +184,8 @@ namespace Chatroom {
                         foreach (KeyValuePair<string, User> kvp in users) { User user = kvp.Value;
                             if(Equals(user.IP, ip)) {
                                 SendToUser(user, "/ban", delegate() {
-                                    Offline(user);
                                     Broadcast(user.username + " has been banned according to the new IP ban list.");
+                                    Offline(user);
                                 });
                             }
                         }
