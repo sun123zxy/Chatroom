@@ -18,16 +18,16 @@ using System.Threading;
 namespace Chatroom {
     public class User {
         public Socket socket;
-        public string nickname;
+        public string username;
         public User() { }
-        public User(Socket socket, string nickname) {
+        public User(Socket socket, string username) {
             this.socket = socket;
-            this.nickname = nickname;
+            this.username = username;
         }
     }
     public class ServerWindow : UniversalWindow {
 
-        public List<User> users;
+        public Dictionary<string, User> users;
         public Socket server;
 
         public override void UniversalWindow_Loaded(object sender, RoutedEventArgs e) {
@@ -48,7 +48,7 @@ namespace Chatroom {
 
             Title += " - Server";
 
-            users = new List<User>();
+            users = new Dictionary<string, User>();
 
             server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             server.Bind(new IPEndPoint(IPAddress.Any, port));
@@ -65,15 +65,20 @@ namespace Chatroom {
                 User user = new User();
                 user.socket = server.Accept();
                 try {
-                    user.nickname = MyNetwork.Read(user.socket);
+                    user.username = MyNetwork.Read(user.socket);
                 } catch {
-                    ShowMsg("A new connection recived from " + user.socket.RemoteEndPoint.ToString() + " lost when sending nickname.");
+                    ShowMsg("A new connection lost when sending username. " + "(" + user.socket.RemoteEndPoint.ToString() + ")");
                     continue;
                 }
-                users.Add(user);
-                ShowMsg("New connection recieved from " + user.nickname + " (" + user.socket.RemoteEndPoint.ToString() + ")");
+                if (users.ContainsKey(user.username)) { //Duplicate Name
+                    SendToUser(user, "/duplicate");
+                    ShowMsg("A new connection lost because of a duplicated username. " + "(" + user.username + ", " + user.socket.RemoteEndPoint.ToString() + ")");
+                    continue;
+                }
+                users.Add(user.username ,user);
+                ShowMsg("A new connection builded." + "(" + user.username + ", " + user.socket.RemoteEndPoint.ToString() + ")");
 
-                Broadcast(user.nickname + " entered the chatroom.");
+                Broadcast(user.username + " entered the chatroom.");
 
                 Thread read = new Thread(delegate () { ReadAndBroadcast(user); });
                 read.IsBackground = true;
@@ -84,7 +89,7 @@ namespace Chatroom {
             try {
                 while (true) {
                     string text = MyNetwork.Read(user.socket);
-                    Broadcast(user.nickname + ": " + text);
+                    Broadcast(user.username + ": " + text);
                 }
             } catch {
                 Offline(user);
@@ -103,21 +108,21 @@ namespace Chatroom {
             tSendToUser.Start();
         }
         public void Broadcast(string text) {
-            foreach (User user in users) {
+            foreach (KeyValuePair<string, User> kvp in users) { User user = kvp.Value;
                 SendToUser(user, text);
             }
             ShowMsg(text);
         }
         public void Offline(User user) {
-            if (users.Contains(user)) {
+            if (users.ContainsKey(user.username)) {
                 user.socket.Close();
-                users.Remove(user);
-                Broadcast(user.nickname + " was no longer in the chatroom.");
+                users.Remove(user.username);
+                Broadcast(user.username + " was no longer in the chatroom.");
             }
         }
         public override void UniversalWindow_Unloaded(object sender, RoutedEventArgs e) {
             if (server != null) server.Close();
-            foreach (User user in users) {
+            foreach (KeyValuePair<string, User> kvp in users) { User user = kvp.Value;
                 user.socket.Close();
             }
         }
@@ -130,17 +135,13 @@ namespace Chatroom {
             switch (args[0]) {
                 case "/kick":
                     if(args.Length == 2) {
-                        bool isKicked = false;
-                        foreach (User user in users) {
-                            if (user.nickname == args[1]) {
-                                SendToUser(user, "/kick");
-                                Offline(user);
+                        if (users.ContainsKey(args[1])) {
+                            User user = users[args[1]];
+                            SendToUser(user, "/kick");
+                            Offline(user);
 
-                                Broadcast(user.nickname + " was kicked out by server admin.");
-                                isKicked = true; break;
-                            }
-                        }
-                        if (!isKicked) {
+                            Broadcast(user.username + " was kicked out by server admin.");
+                        } else {
                             ShowMsg("Cannot find a user called " + args[1]);
                         }
                     } else {

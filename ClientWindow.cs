@@ -17,7 +17,7 @@ using System.Data;
 
 namespace Chatroom {
     class ClientWindow : UniversalWindow {
-        string nickName;
+        string username;
 
         Socket client;
 
@@ -53,14 +53,14 @@ namespace Chatroom {
                 ConnectionLost();
                 return;
             }
-            nickName = ccw.txbNickname.Text;
-            if (nickName.Contains(' ')) {
-                MessageBox.Show("Nickname mustn't contains space");
+            username = ccw.txbUsername.Text;
+            if (username.Contains(' ')) {
+                MessageBox.Show("username mustn't contains space");
                 ConnectionLost();
                 return;
             }
 
-            Title += " - Client - " + nickName;
+            Title += " - Client - " + username;
 
             ShowMsg("Connecting " + ip + ":" + port + " ...");
             Thread tConnect = new Thread(delegate () { Connect(ip, port); });
@@ -71,7 +71,7 @@ namespace Chatroom {
             try {
                 client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 client.Connect(ip, port);
-                MyNetwork.Write(client, nickName); //Send nickname
+                MyNetwork.Write(client, username); //Send username
             } catch {
                 ConnectionLost();
                 return;
@@ -102,6 +102,10 @@ namespace Chatroom {
             switch (args[0]) {
                 case "/kick":
                     ShowMsg("You were kicked out by server admin.");
+                    ConnectionLost();
+                    break;
+                case "/duplicate":
+                    ShowMsg("Cannot join the server because your username is already in use. Change your username and retry.");
                     ConnectionLost();
                     break;
             }
